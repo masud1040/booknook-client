@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   BookOpen,
   Bell,
@@ -13,25 +13,56 @@ import {
   LogOut,
   ChevronDown,
 } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+import { toast } from "react-toastify";
+import Image from "next/image";
 
 const navLinks = [
   { name: "Home", href: "/" },
   { name: "All Books", href: "/books" },
-  { name: "Add Book", href: "/add-book" },
-  { name: "My Books", href: "/my-books" },
-  { name: "My Borrows", href: "/my-borrows" },
+  { name: "Add Book", href: "/add-book", private: true },
+  { name: "My Books", href: "/my-books", private: true },
+  { name: "My Borrows", href: "/my-borrows", private: true },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
+
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
-  // Replace with Better Auth session later.
-  const user = null;
+  const { data: session, isPending } = authClient.useSession();
+  const user = session?.user;
+
+  const visibleLinks = navLinks.filter(
+    (link) => !link.private || !!user
+  );
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
+
+  const handleLogout = async () => {
+    try {
+      setLoggingOut(true);
+
+      await authClient.signOut();
+
+      toast.success("Logged out successfully!");
+
+      setProfileOpen(false);
+      setMobileOpen(false);
+
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Logout failed. Please try again.");
+    } finally {
+      setLoggingOut(false);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#e2e8f0] bg-white/95 backdrop-blur-md">
@@ -55,7 +86,7 @@ export default function Navbar() {
 
         {/* Desktop Navigation */}
         <nav className="hidden items-center gap-1 rounded-xl border border-[#e9eef5] bg-[#f6f8fb] p-1.5 lg:flex">
-          {navLinks.map((link) => (
+          {visibleLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -80,33 +111,64 @@ export default function Navbar() {
             <Bell size={19} strokeWidth={1.8} />
           </button>
 
-          {user ? (
+          {isPending ? (
+            <div className="h-10 w-24 animate-pulse rounded-xl bg-slate-100" />
+          ) : user ? (
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setProfileOpen(!profileOpen)}
-                className="flex items-center gap-2 rounded-full border border-[#e2e8f0] p-1 pr-3"
+                className="flex items-center gap-2 rounded-full border border-[#e2e8f0] py-1 pl-1 pr-3 transition hover:bg-slate-50"
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-700">
-                  <UserRound size={17} />
+                <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-blue-700">
+                  {user.image ? (
+                    <Image
+                      width={40}
+                      height={40}
+                      src={user.image}
+                      alt={user.name || "Profile"}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <UserRound size={19} />
+                  )}
                 </div>
+
+                <span className="max-w-[110px] truncate text-sm font-semibold text-slate-700">
+                  {user.name}
+                </span>
+
                 <ChevronDown size={15} />
               </button>
 
               {profileOpen && (
-                <div className="absolute right-0 top-12 w-48 rounded-xl border border-[#e2e8f0] bg-white p-2 shadow-lg">
+                <div className="absolute right-0 top-12 z-50 w-56 rounded-xl border border-[#e2e8f0] bg-white p-2 shadow-lg">
+                  <div className="border-b border-slate-100 px-3 py-3">
+                    <p className="truncate text-sm font-bold text-slate-800">
+                      {user.name}
+                    </p>
+                    <p className="truncate text-xs text-slate-500">
+                      {user.email}
+                    </p>
+                  </div>
+
                   <Link
                     href="/profile"
-                    className="block rounded-lg px-3 py-2 text-sm hover:bg-slate-50"
+                    onClick={() => setProfileOpen(false)}
+                    className="mt-1 flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   >
+                    <UserRound size={16} />
                     My Profile
                   </Link>
+
                   <button
                     type="button"
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                    onClick={handleLogout}
+                    disabled={loggingOut}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
                   >
-                    <LogOut size={15} />
-                    Logout
+                    <LogOut size={16} />
+                    {loggingOut ? "Logging out..." : "Logout"}
                   </button>
                 </div>
               )}
@@ -145,7 +207,7 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="border-t border-[#e2e8f0] bg-white px-5 py-4 lg:hidden">
           <nav className="flex flex-col gap-1">
-            {navLinks.map((link) => (
+            {visibleLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -161,7 +223,50 @@ export default function Navbar() {
             ))}
           </nav>
 
-          {!user && (
+          {isPending ? (
+            <div className="mt-4 h-10 animate-pulse rounded-lg bg-slate-100" />
+          ) : user ? (
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              <Link
+                href="/profile"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 rounded-lg p-3 hover:bg-slate-50"
+              >
+                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-blue-700">
+                  {user.image ? (
+                    <Image
+                      src={user.image}
+                      alt={user.name || "Profile"}
+                      className="h-full w-full object-cover"
+                      width={40}
+                      height={40}
+                    />
+                  ) : (
+                    <UserRound size={20} />
+                  )}
+                </div>
+
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-slate-800">
+                    {user.name}
+                  </p>
+                  <p className="truncate text-xs text-slate-500">
+                    My Profile
+                  </p>
+                </div>
+              </Link>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-red-50 py-3 text-sm font-bold text-red-600 disabled:opacity-50"
+              >
+                <LogOut size={17} />
+                {loggingOut ? "Logging out..." : "Logout"}
+              </button>
+            </div>
+          ) : (
             <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
               <Link
                 href="/sign-in"
@@ -170,6 +275,7 @@ export default function Navbar() {
               >
                 Login
               </Link>
+
               <Link
                 href="/sign-up"
                 onClick={() => setMobileOpen(false)}

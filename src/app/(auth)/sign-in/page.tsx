@@ -1,107 +1,170 @@
+
 "use client";
 
+import React, { useState } from "react";
 import Link from "next/link";
-import { BookOpen, Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
-
-
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
+import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldSeparator,
+} from "@/components/ui/field";
+
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import GoogleIcon from "@/components/shared/GoogleIcon";
 
-export default function SignInPage() {
-  const [showPassword, setShowPassword] = useState(false);
+export default function LoginPage() {
+  const router = useRouter();
 
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleEmailLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setErrorMessage("");
+  setLoading(true);
+
+  const formData = new FormData(e.currentTarget);
+
+  const user = Object.fromEntries(formData.entries()) as {
+    email: string;
+    password: string;
+  };
+
+  try {
+    const { data, error } = await authClient.signIn.email({
+      ...user,
+    });
+
+    if (error) {
+      toast.error(error.message || "Login failed!");
+      return;
+    }
+
+    if (data) {
+      toast.success("Login successful! Welcome back to BookNook.");
+
+      router.push("/");
+      router.refresh();
+      return;
+    }
+
+    toast.error("Login response was empty. Please try again.");
+  } catch (error: unknown) {
+    console.error("Login Error:", error);
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Something went wrong. Please try again.";
+
+    toast.error(message);
+  } finally {
+    setLoading(false);
+  }
+};
   return (
-    <main className="flex min-h-[calc(100vh-80px)] items-center justify-center bg-[#F4F7FB] px-4 py-12">
-      <Card className="w-full max-w-md rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <CardHeader className="space-y-4 text-center">
-          <Link href="/" className="mx-auto flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white">
-              <BookOpen size={23} />
-            </div>
-            <span className="text-2xl font-bold text-slate-900">
-              Book<span className="text-blue-600">Nook</span>
-            </span>
-          </Link>
+    <div className="flex flex-col gap-6 max-w-md mx-auto my-10 px-4">
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">
+            Welcome Back
+          </CardTitle>
 
-          <div>
-            <CardTitle className="text-2xl font-bold text-slate-900">
-              Welcome Back!
-            </CardTitle>
-            <CardDescription className="mt-2">
-              Sign in to continue your reading journey.
-            </CardDescription>
-          </div>
+          <CardDescription>
+            Login to your BookNook account.
+          </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-5">
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 w-full rounded-xl border-slate-300"
-          >
-            <GoogleIcon />
-            Continue with Google
-          </Button>
+        <CardContent>
+          <form onSubmit={handleEmailLogin}>
+            <FieldGroup>
+              <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
+                Continue with email
+              </FieldSeparator>
 
-          <div className="flex items-center gap-3">
-            <Separator className="flex-1" />
-            <span className="text-xs text-slate-400">
-              OR CONTINUE WITH EMAIL
-            </span>
-            <Separator className="flex-1" />
-          </div>
+              <Field>
+                <FieldLabel htmlFor="email">
+                  Email
+                </FieldLabel>
 
-          <form className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                className="h-11 rounded-xl"
-              />
-            </div>
+                <Input
+                  id="email"
+                  type="email"
+                  name="email"
+                  placeholder="m@example.com"
+                  autoComplete="email"
+                  required
+                />
+              </Field>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
+              <Field>
+                <FieldLabel htmlFor="password">
+                  Password
+                </FieldLabel>
+
                 <Input
                   id="password"
-                  type={showPassword ? "text" : "password"}
+                  type="password"
+                  name="password"
                   placeholder="Enter your password"
-                  className="h-11 rounded-xl pr-11"
+                  autoComplete="current-password"
+                  required
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+              </Field>
+
+              {errorMessage && (
+                <p className="text-sm text-red-500">
+                  {errorMessage}
+                </p>
+              )}
+
+              <Field>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full"
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
+                  {loading ? "Logging in..." : "Login"}
+                </Button>
 
-            <Button
-              type="button"
-              className="h-11 w-full rounded-xl bg-blue-600 hover:bg-blue-700"
-            >
-              Sign In
-            </Button>
+                <FieldDescription className="text-center">
+                  Don't have an account?{" "}
+                  <Link
+                    href="/sign-up"
+                    className="text-primary font-medium hover:underline"
+                  >
+                    Sign Up
+                  </Link>
+                </FieldDescription>
+              </Field>
+            </FieldGroup>
           </form>
-
-          <p className="text-center text-sm text-slate-500">
-            Don't have an account?{" "}
-            <Link href="/sign-up" className="font-semibold text-blue-600">
-              Create Account
-            </Link>
-          </p>
         </CardContent>
       </Card>
-    </main>
+
+      <FieldDescription className="px-6 text-center">
+        By clicking continue, you agree to our{" "}
+        <Link href="#" className="underline">
+          Terms of Service
+        </Link>{" "}
+        and{" "}
+        <Link href="#" className="underline">
+          Privacy Policy
+        </Link>.
+      </FieldDescription>
+    </div>
   );
 }
