@@ -1,21 +1,26 @@
-import type { Metadata } from "next";
-import { DM_Sans, Playfair_Display } from "next/font/google";
-import "./globals.css";
-import { ToastProvider } from "@/components/ui/toast";
 
-const dmSans = DM_Sans({
+import type { Metadata } from "next";
+import { Inter, Noto_Sans_Bengali } from "next/font/google";
+import "./globals.css";
+import Navbar from "@/components/shared/Navbar";
+import Footer from "@/components/shared/Footer";
+
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-dm-sans",
+  variable: "--font-inter",
+  display: "swap",
 });
 
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-playfair",
+const notoBengali = Noto_Sans_Bengali({
+  subsets: ["bengali", "latin"],
+  variable: "--font-bengali",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
   title: "BookNook | A Small Online Library",
-  description: "Discover, borrow and share your favorite books.",
+  description:
+    "Discover, borrow and share books with BookNook.",
 };
 
 export default function RootLayout({
@@ -25,10 +30,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${dmSans.variable} ${playfair.variable} antialiased`}>
-
-      <ToastProvider />
+      <body
+        className={`${inter.variable} ${notoBengali.variable} antialiased`}
+      >
+        <Navbar/>
         {children}
+          <Footer />
       </body>
     </html>
   );

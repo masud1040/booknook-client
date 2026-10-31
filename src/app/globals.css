@@ -126,3 +126,25 @@ h3,
 h4 {
   font-family: var(--font-playfair), serif;
 }
+
+/* BookNook Hero Slider */
+
+.booknook-hero .swiper-pagination-bullet {
+  width: 7px;
+  height: 7px;
+  margin: 0 3px !important;
+  border-radius: 20px;
+  background: #ffffff;
+  opacity: 0.55;
+  transition: all 0.25s ease;
+}
+
+.booknook-hero .swiper-pagination-bullet-active {
+  width: 23px;
+  background: #3b82f6;
+  opacity: 1;
+}
+
+.booknook-hero .swiper-slide {
+  overflow: hidden;
+}
