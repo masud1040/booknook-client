@@ -114,14 +114,14 @@ export default function Navbar() {
           ) : (
             <>
               <Link
-                href="/login"
+                href="/sign-in"
                 className="rounded-xl bg-[#1d4ed8] px-5 py-2.5 text-xs font-extrabold uppercase tracking-wide text-white shadow-sm transition hover:bg-[#1e40af]"
               >
                 Login
               </Link>
 
               <Link
-                href="/register"
+                href="/sign-up"
                 className="rounded-xl border border-[#e2e8f0] px-4 py-2.5 text-xs font-bold text-[#334155] transition hover:border-[#2563eb] hover:text-[#2563eb]"
               >
                 Register
@@ -164,14 +164,14 @@ export default function Navbar() {
           {!user && (
             <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
               <Link
-                href="/login"
+                href="/sign-in"
                 onClick={() => setMobileOpen(false)}
                 className="rounded-lg bg-blue-700 py-3 text-center text-sm font-bold text-white"
               >
                 Login
               </Link>
               <Link
-                href="/register"
+                href="/sign-up"
                 onClick={() => setMobileOpen(false)}
                 className="rounded-lg border border-slate-200 py-3 text-center text-sm font-bold text-slate-700"
               >
