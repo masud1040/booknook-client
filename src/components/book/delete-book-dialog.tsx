@@ -65,7 +65,7 @@ export function DeleteBookDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
+      <AlertDialogTrigger >
         <Button
           variant="outline"
           size="icon"
@@ -104,7 +104,7 @@ export function DeleteBookDialog({
             }}
             className="bg-red-600 hover:bg-red-700"
           >
-            {loading ? "Deleting..." : "Yes, Delete"}
+            {loading ? "Deleting...": "Yes, Delete"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

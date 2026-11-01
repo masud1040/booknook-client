@@ -76,16 +76,11 @@ export function BookCard({ book }: BookCardProps) {
           </span>
         </div>
 
-        <Button
-          asChild
-          className="w-full rounded-xl bg-slate-900 font-semibold text-white hover:bg-blue-700"
-        >
-          <Link href={`/books/${book._id}`}>
-            <BookOpen className="mr-2 size-4" />
-            View Details
-            <ArrowUpRight className="ml-auto size-4" />
-          </Link>
-        </Button>
+       <Link href={`/books/${book._id}`}>
+  <Button>
+    View Details
+  </Button>
+</Link>
       </CardContent>
     </Card>
   );

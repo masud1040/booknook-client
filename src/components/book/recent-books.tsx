@@ -40,7 +40,7 @@ async function RecentBooks() {
           </div>
 
           <Button
-            asChild
+          
             variant="outline"
             className="w-fit rounded-xl border-slate-300"
           >
