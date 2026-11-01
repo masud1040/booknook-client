@@ -6,6 +6,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "react-toastify";
+import { FcGoogle } from "react-icons/fc";
+import { BookOpen, Loader2 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -29,142 +32,219 @@ export default function LoginPage() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [googleLoading, setGoogleLoading] = useState(false);
 
-  const handleEmailLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setErrorMessage("");
-  setLoading(true);
+  // Email and Password Login
+  const handleEmailLogin = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
+    e.preventDefault();
+    setLoading(true);
 
-  const formData = new FormData(e.currentTarget);
+    const formData = new FormData(e.currentTarget);
 
-  const user = Object.fromEntries(formData.entries()) as {
-    email: string;
-    password: string;
+    const user = Object.fromEntries(formData.entries()) as {
+      email: string;
+      password: string;
+    };
+
+    try {
+      const { data, error } = await authClient.signIn.email({
+        ...user,
+      });
+
+      if (error) {
+        toast.error(error.message || "Login failed!");
+        return;
+      }
+
+      if (data) {
+        toast.success("Login successful! Welcome back to BookNook.");
+
+        router.push("/");
+        router.refresh();
+        return;
+      }
+
+      toast.error("Login response was empty. Please try again.");
+    } catch (error: unknown) {
+      console.error("Login Error:", error);
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again.";
+
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  try {
-    const { data, error } = await authClient.signIn.email({
-      ...user,
-    });
+  // Google Login
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true);
 
-    if (error) {
-      toast.error(error.message || "Login failed!");
-      return;
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
+    } catch (error: unknown) {
+      console.error("Google Login Error:", error);
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Google login failed!";
+
+      toast.error(message);
+      setGoogleLoading(false);
     }
+  };
 
-    if (data) {
-      toast.success("Login successful! Welcome back to BookNook.");
-
-      router.push("/");
-      router.refresh();
-      return;
-    }
-
-    toast.error("Login response was empty. Please try again.");
-  } catch (error: unknown) {
-    console.error("Login Error:", error);
-
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Something went wrong. Please try again.";
-
-    toast.error(message);
-  } finally {
-    setLoading(false);
-  }
-};
   return (
-    <div className="flex flex-col gap-6 max-w-md mx-auto my-10 px-4">
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">
-            Welcome Back
-          </CardTitle>
+    <div className="min-h-[calc(100vh-80px)] bg-slate-50 px-4 py-12">
+      <div className="mx-auto flex w-full max-w-md flex-col gap-6">
 
-          <CardDescription>
-            Login to your BookNook account.
-          </CardDescription>
-        </CardHeader>
+        {/* BookNook Branding */}
+        <div className="flex flex-col items-center text-center">
+          <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
+            <BookOpen className="size-7" />
+          </div>
 
-        <CardContent>
-          <form onSubmit={handleEmailLogin}>
-            <FieldGroup>
-              <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
-                Continue with email
-              </FieldSeparator>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            BookNook
+          </h1>
 
-              <Field>
-                <FieldLabel htmlFor="email">
-                  Email
-                </FieldLabel>
+          <p className="mt-1 text-sm text-slate-500">
+            Your little corner of knowledge.
+          </p>
+        </div>
 
-                <Input
-                  id="email"
-                  type="email"
-                  name="email"
-                  placeholder="m@example.com"
-                  autoComplete="email"
-                  required
-                />
-              </Field>
+        {/* Login Card */}
+        <Card className="overflow-hidden rounded-2xl border-slate-200 shadow-xl shadow-slate-200/50">
+          <CardHeader className="space-y-2 pb-4 text-center">
+            <CardTitle className="text-2xl font-bold text-slate-900">
+              Welcome Back
+            </CardTitle>
 
-              <Field>
-                <FieldLabel htmlFor="password">
-                  Password
-                </FieldLabel>
+            <CardDescription className="text-slate-500">
+              Sign in to continue your reading journey.
+            </CardDescription>
+          </CardHeader>
 
-                <Input
-                  id="password"
-                  type="password"
-                  name="password"
-                  placeholder="Enter your password"
-                  autoComplete="current-password"
-                  required
-                />
-              </Field>
+          <CardContent className="space-y-6">
 
-              {errorMessage && (
-                <p className="text-sm text-red-500">
-                  {errorMessage}
-                </p>
+            {/* Google Login Button */}
+            <Button
+              type="button"
+              variant="outline"
+              disabled={loading || googleLoading}
+              onClick={handleGoogleLogin}
+              className="h-11 w-full gap-3 rounded-xl border-slate-300 bg-white font-medium text-slate-700 hover:bg-slate-50"
+            >
+              {googleLoading ? (
+                <Loader2 className="size-5 animate-spin" />
+              ) : (
+                <FcGoogle className="size-5" />
               )}
 
-              <Field>
+              {googleLoading
+                ? "Connecting to Google..."
+                : "Continue with Google"}
+            </Button>
+
+            {/* Email Login Form */}
+            <form onSubmit={handleEmailLogin}>
+              <FieldGroup>
+                <FieldSeparator className="*:data-[slot=field-separator-content]:bg-white">
+                  Or continue with email
+                </FieldSeparator>
+
+                <Field>
+                  <FieldLabel htmlFor="email">
+                    Email Address
+                  </FieldLabel>
+
+                  <Input
+                    id="email"
+                    type="email"
+                    name="email"
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    required
+                    disabled={loading || googleLoading}
+                    className="h-11 rounded-xl"
+                  />
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="password">
+                    Password
+                  </FieldLabel>
+
+                  <Input
+                    id="password"
+                    type="password"
+                    name="password"
+                    placeholder="Enter your password"
+                    autoComplete="current-password"
+                    required
+                    disabled={loading || googleLoading}
+                    className="h-11 rounded-xl"
+                  />
+                </Field>
+
                 <Button
                   type="submit"
-                  disabled={loading}
-                  className="w-full"
+                  disabled={loading || googleLoading}
+                  className="mt-2 h-11 w-full rounded-xl bg-blue-600 font-semibold hover:bg-blue-700"
                 >
-                  {loading ? "Logging in..." : "Login"}
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                      Logging in...
+                    </>
+                  ) : (
+                    "Sign In"
+                  )}
                 </Button>
+              </FieldGroup>
+            </form>
 
-                <FieldDescription className="text-center">
-                  Don't have an account?{" "}
-                  <Link
-                    href="/sign-up"
-                    className="text-primary font-medium hover:underline"
-                  >
-                    Sign Up
-                  </Link>
-                </FieldDescription>
-              </Field>
-            </FieldGroup>
-          </form>
-        </CardContent>
-      </Card>
+            {/* Signup Link */}
+            <p className="text-center text-sm text-slate-500">
+              Don't have an account?{" "}
+              <Link
+                href="/sign-up"
+                className="font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+              >
+                Create an account
+              </Link>
+            </p>
+          </CardContent>
+        </Card>
 
-      <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our{" "}
-        <Link href="#" className="underline">
-          Terms of Service
-        </Link>{" "}
-        and{" "}
-        <Link href="#" className="underline">
-          Privacy Policy
-        </Link>.
-      </FieldDescription>
+        {/* Terms and Conditions */}
+        <p className="px-4 text-center text-xs leading-6 text-slate-400">
+          By continuing, you agree to our{" "}
+          <Link
+            href="#"
+            className="underline hover:text-slate-600"
+          >
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="#"
+            className="underline hover:text-slate-600"
+          >
+            Privacy Policy
+          </Link>.
+        </p>
+
+      </div>
     </div>
   );
 }

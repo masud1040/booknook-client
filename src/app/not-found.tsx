@@ -32,7 +32,7 @@ export default function NotFound() {
         {/* Buttons */}
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Button
-            asChild
+     
             className="h-12 rounded-xl bg-blue-600 px-6 hover:bg-blue-700"
           >
             <Link href="/">
@@ -42,7 +42,7 @@ export default function NotFound() {
           </Button>
 
           <Button
-            asChild
+   
             variant="outline"
             className="h-12 rounded-xl border-slate-300 px-6"
           >
