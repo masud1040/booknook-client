@@ -7,6 +7,7 @@ import { Pencil } from "lucide-react";
 import { toast } from "react-toastify";
 
 import type { IBook } from "@/lib/types/book";
+import { getTokenFromClient } from "@/lib/getTokenFromClient";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,12 +61,11 @@ export function EditBookDialog({ book }: EditBookDialogProps) {
     userEmail: book.userEmail,
   });
 
-  const update = (field: keyof typeof form, value: string) => {
-    setForm((prev) => ({
-      ...prev,
+  const update = (field: keyof typeof form, value: string) =>
+    setForm((current) => ({
+      ...current,
       [field]: value,
     }));
-  };
 
   const handleSubmit = async (
     event: React.FormEvent<HTMLFormElement>
@@ -102,21 +102,25 @@ export function EditBookDialog({ book }: EditBookDialogProps) {
     try {
       setLoading(true);
 
+      const token = await getTokenFromClient();
+
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/books/${book._id}`,
         {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
+            authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(bookData),
         }
       );
 
-      const result = await res.json();
+      const data = await res.json();
+      console.log(data);
 
       if (!res.ok) {
-        toast.error(result.message || "Failed to update book!");
+        toast.error(data.message || "Failed to update book!");
         return;
       }
 
@@ -125,7 +129,11 @@ export function EditBookDialog({ book }: EditBookDialogProps) {
       router.refresh();
     } catch (error) {
       console.error("Update book error:", error);
-      toast.error("Something went wrong!");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong!"
+      );
     } finally {
       setLoading(false);
     }
@@ -133,16 +141,13 @@ export function EditBookDialog({ book }: EditBookDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon"
-          title="Edit Book"
-          className="size-10 rounded-xl text-amber-600 hover:bg-amber-50 hover:text-amber-700"
-        >
-          <Pencil className="size-4" />
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button variant="outline" size="icon" title="Edit Book">
+            <Pencil />
+          </Button>
+        }
+      />
 
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>

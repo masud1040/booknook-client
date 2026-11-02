@@ -19,6 +19,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 import { authClient } from "@/lib/auth-client";
+import { getTokenFromClient } from "@/lib/getTokenFromClient";
 
 const categories = [
   "Fiction",
@@ -73,12 +74,15 @@ export default function AddBookPage() {
     };
 
     try {
+      const token = await getTokenFromClient();
+
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/add-book`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(bookData),
         },

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import type { IBook } from "@/lib/types/book";
 import { MyBooksGrid } from "@/components/book/my-books-grid";
+import { getTokenFromServer } from "@/lib/getTokenFromServer";
 
 const MyBooksPage = async () => {
   const session = await auth.api.getSession({
@@ -17,14 +18,22 @@ const MyBooksPage = async () => {
     redirect("/sign-in");
   }
 
+  const token = await getTokenFromServer();
+
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/my-books/${encodeURIComponent(user.email)}`,
     {
       cache: "no-store",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     }
   );
 
   if (!res.ok) {
+    const errorText = await res.text();
+    console.error("My Books API Error:", res.status, errorText);
+
     throw new Error("Failed to fetch your books!");
   }
 

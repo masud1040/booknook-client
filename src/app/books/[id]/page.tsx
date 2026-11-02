@@ -1,3 +1,4 @@
+
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -12,6 +13,7 @@ import {
 
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { getTokenFromServer } from "@/lib/getTokenFromServer";
 
 import type { IBook } from "@/lib/types/book";
 import { Button } from "@/components/ui/button";
@@ -25,6 +27,7 @@ const BookDetailsPage = async ({
 }) => {
   const { id } = await params;
 
+  // Check User Session
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -33,14 +36,33 @@ const BookDetailsPage = async ({
     redirect("/sign-in");
   }
 
+  // Get JWT Token
+  const token = await getTokenFromServer();
+
+  if (!token) {
+    redirect("/sign-in");
+  }
+
+  // Fetch Book Details
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/books/${id}`,
     {
       cache: "no-store",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     }
   );
 
   if (!res.ok) {
+    const errorText = await res.text();
+
+    console.error(
+      "Book Details API Error:",
+      res.status,
+      errorText
+    );
+
     notFound();
   }
 
@@ -113,6 +135,7 @@ const BookDetailsPage = async ({
 
               {/* Availability Information */}
               <div className="mt-7 grid grid-cols-2 gap-4">
+
                 <div className="rounded-xl border border-slate-200 p-4">
                   <div className="flex items-center gap-2 text-sm text-slate-500">
                     <Library className="size-4" />
@@ -134,6 +157,7 @@ const BookDetailsPage = async ({
                     {book.availableCopies}
                   </p>
                 </div>
+
               </div>
 
               {/* Borrow Action */}
@@ -150,11 +174,13 @@ const BookDetailsPage = async ({
               <p className="mt-3 text-xs text-slate-400">
                 You can borrow each book only once at a time.
               </p>
+
             </div>
           </div>
 
           {/* Description */}
           <div className="border-t border-slate-200 p-6 sm:p-10">
+
             <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
               <BookOpen className="size-5 text-blue-600" />
               About This Book
@@ -166,18 +192,23 @@ const BookDetailsPage = async ({
 
             {/* Added By */}
             <div className="mt-8 rounded-xl bg-slate-50 p-5">
+
               <h3 className="mb-4 text-sm font-semibold text-slate-800">
                 Book Added By
               </h3>
 
               <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+
                 <div className="flex items-center gap-3">
                   <div className="flex size-10 items-center justify-center rounded-full bg-blue-100 text-blue-600">
                     <UserRound className="size-5" />
                   </div>
 
                   <div>
-                    <p className="text-xs text-slate-400">Added By</p>
+                    <p className="text-xs text-slate-400">
+                      Added By
+                    </p>
+
                     <p className="text-sm font-semibold text-slate-800">
                       {book.userName}
                     </p>
@@ -190,16 +221,20 @@ const BookDetailsPage = async ({
                   </div>
 
                   <div>
-                    <p className="text-xs text-slate-400">Date Added</p>
+                    <p className="text-xs text-slate-400">
+                      Date Added
+                    </p>
+
                     <p className="text-sm font-semibold text-slate-800">
                       {new Date(book.dateAdded).toLocaleDateString("en-GB")}
                     </p>
                   </div>
                 </div>
+
               </div>
             </div>
-          </div>
 
+          </div>
         </div>
       </div>
     </main>

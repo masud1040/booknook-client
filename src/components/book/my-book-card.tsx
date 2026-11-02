@@ -69,7 +69,7 @@ export function MyBookCard({ book }: MyBookCardProps) {
 
         {/* View */}
         <Button
-          asChild
+      
           variant="outline"
           size="icon"
           className="size-10 rounded-xl text-blue-600 hover:bg-blue-50 hover:text-blue-700"

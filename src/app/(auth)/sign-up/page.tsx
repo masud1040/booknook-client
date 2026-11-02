@@ -1,11 +1,13 @@
 
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState } from "react";
 import Link from "next/link";
-import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { toast } from "react-toastify";
+import { FcGoogle } from "react-icons/fc";
+import { BookOpen, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -26,232 +28,284 @@ import {
 
 import { Input } from "@/components/ui/input";
 
-import { Eye, EyeOff } from "lucide-react";
-
 export default function SignUpPage() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
-  const handleEmailSignUp = async (
+  // Email and Password Signup
+  const handleSignUp = async (
     e: React.FormEvent<HTMLFormElement>
   ) => {
     e.preventDefault();
-
-    setError("");
+    setLoading(true);
 
     const formData = new FormData(e.currentTarget);
 
-    const name = formData.get("name") as string;
-    const image = formData.get("image") as string;
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+    const user = Object.fromEntries(formData.entries()) as {
+      name: string;
+      email: string;
+      image: string;
+      password: string;
+    };
 
-    // Password validation
+    // Password Validation
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z]).{6,}$/;
 
-    if (!passwordRegex.test(password)) {
-      setError(
-        "Password must contain at least 6 characters, one uppercase and one lowercase letter."
+    if (!passwordRegex.test(user.password)) {
+      toast.error(
+        "Password must contain uppercase, lowercase and at least 6 characters."
       );
+      setLoading(false);
       return;
     }
 
     try {
-      setLoading(true);
-
       const { data, error } = await authClient.signUp.email({
-        name,
-        image,
-        email,
-        password,
+        name: user.name,
+        email: user.email,
+        password: user.password,
+        image: user.image || undefined,
       });
 
       if (error) {
-        toast.error(error.message || "Account creation failed!");
+        toast.error(error.message || "Registration failed!");
         return;
       }
 
       if (data) {
-        toast.success("Account created successfully!");
+        toast.success("Account created successfully! Welcome to BookNook.");
 
         router.push("/");
         router.refresh();
+        return;
       }
-    } catch (err) {
-      console.error("Signup Error:", err);
-      setError("Something went wrong. Please try again.");
+
+      toast.error("Registration response was empty. Please try again.");
+    } catch (error: unknown) {
+      console.error("Signup Error:", error);
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again.";
+
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
 
+  // Google Signup
+  const handleGoogleSignUp = async () => {
+    setGoogleLoading(true);
+
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
+    } catch (error: unknown) {
+      console.error("Google Signup Error:", error);
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Google signup failed!";
+
+      toast.error(message);
+      setGoogleLoading(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col gap-6 max-w-md mx-auto my-10 px-4">
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">
-            Create an Account
-          </CardTitle>
+    <div className="min-h-[calc(100vh-80px)] bg-slate-50 px-4 py-12">
+      <div className="mx-auto flex w-full max-w-md flex-col gap-6">
 
-          <CardDescription>
-            Join BookNook and start exploring your favorite books.
-          </CardDescription>
-        </CardHeader>
+        {/* BookNook Branding */}
+        <div className="flex flex-col items-center text-center">
+          <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
+            <BookOpen className="size-7" />
+          </div>
 
-        <CardContent>
-          <form onSubmit={handleEmailSignUp}>
-            <FieldGroup>
-              {/* Social Login */}
-              <Field>
-                <Button
-                  variant="outline"
-                  type="button"
-                  disabled
-                >
-                  Login with Apple
-                </Button>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            BookNook
+          </h1>
 
-                <Button
-                  variant="outline"
-                  type="button"
-                  disabled
-                >
-                  Login with Google
-                </Button>
-              </Field>
+          <p className="mt-1 text-sm text-slate-500">
+            Your little corner of knowledge.
+          </p>
+        </div>
 
-              <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
-                Or continue with email
-              </FieldSeparator>
+        {/* Signup Card */}
+        <Card className="overflow-hidden rounded-2xl border-slate-200 shadow-xl shadow-slate-200/50">
+          <CardHeader className="space-y-2 pb-4 text-center">
+            <CardTitle className="text-2xl font-bold text-slate-900">
+              Create Your Account
+            </CardTitle>
 
-              {/* Name */}
-              <Field>
-                <FieldLabel htmlFor="name">
-                  Full Name
-                </FieldLabel>
+            <CardDescription className="text-slate-500">
+              Join BookNook and start your reading journey.
+            </CardDescription>
+          </CardHeader>
 
-                <Input
-                  id="name"
-                  name="name"
-                  type="text"
-                  placeholder="Enter your full name"
-                  required
-                />
-              </Field>
+          <CardContent className="space-y-6">
 
-              {/* Image */}
-              <Field>
-                <FieldLabel htmlFor="image">
-                  Profile Image URL
-                </FieldLabel>
-
-                <Input
-                  id="image"
-                  name="image"
-                  type="url"
-                  placeholder="https://example.com/image.jpg"
-                  required
-                />
-              </Field>
-
-              {/* Email */}
-              <Field>
-                <FieldLabel htmlFor="email">
-                  Email Address
-                </FieldLabel>
-
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                />
-              </Field>
-
-              {/* Password */}
-              <Field>
-                <FieldLabel htmlFor="password">
-                  Password
-                </FieldLabel>
-
-                <div className="relative">
-                  <Input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Create a password"
-                    minLength={6}
-                    required
-                    className="pr-12"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                  >
-                    {showPassword ? (
-                      <EyeOff size={18} />
-                    ) : (
-                      <Eye size={18} />
-                    )}
-                  </button>
-                </div>
-
-                <FieldDescription>
-                  At least 6 characters, including uppercase and lowercase letters.
-                </FieldDescription>
-              </Field>
-
-              {/* Error */}
-              {error && (
-                <p className="text-sm text-red-500">
-                  {error}
-                </p>
+            {/* Google Signup */}
+            <Button
+              type="button"
+              variant="outline"
+              disabled={loading || googleLoading}
+              onClick={handleGoogleSignUp}
+              className="h-11 w-full gap-3 rounded-xl border-slate-300 bg-white font-medium text-slate-700 hover:bg-slate-50"
+            >
+              {googleLoading ? (
+                <Loader2 className="size-5 animate-spin" />
+              ) : (
+                <FcGoogle className="size-5" />
               )}
 
-              {/* Submit */}
-              <Field>
+              {googleLoading
+                ? "Connecting to Google..."
+                : "Continue with Google"}
+            </Button>
+
+            {/* Email Signup Form */}
+            <form onSubmit={handleSignUp}>
+              <FieldGroup>
+                <FieldSeparator className="*:data-[slot=field-separator-content]:bg-white">
+                  Or sign up with email
+                </FieldSeparator>
+
+                {/* Name */}
+                <Field>
+                  <FieldLabel htmlFor="name">
+                    Full Name
+                  </FieldLabel>
+
+                  <Input
+                    id="name"
+                    type="text"
+                    name="name"
+                    placeholder="Enter your full name"
+                    autoComplete="name"
+                    required
+                    disabled={loading || googleLoading}
+                    className="h-11 rounded-xl"
+                  />
+                </Field>
+
+                {/* Email */}
+                <Field>
+                  <FieldLabel htmlFor="email">
+                    Email Address
+                  </FieldLabel>
+
+                  <Input
+                    id="email"
+                    type="email"
+                    name="email"
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    required
+                    disabled={loading || googleLoading}
+                    className="h-11 rounded-xl"
+                  />
+                </Field>
+
+                {/* Profile Image */}
+                <Field>
+                  <FieldLabel htmlFor="image">
+                    Profile Photo URL
+                    <span className="ml-1 text-xs font-normal text-slate-400">
+                      (Optional)
+                    </span>
+                  </FieldLabel>
+
+                  <Input
+                    id="image"
+                    type="url"
+                    name="image"
+                    placeholder="https://example.com/photo.jpg"
+                    disabled={loading || googleLoading}
+                    className="h-11 rounded-xl"
+                  />
+                </Field>
+
+                {/* Password */}
+                <Field>
+                  <FieldLabel htmlFor="password">
+                    Password
+                  </FieldLabel>
+
+                  <Input
+                    id="password"
+                    type="password"
+                    name="password"
+                    placeholder="Create a strong password"
+                    autoComplete="new-password"
+                    minLength={6}
+                    required
+                    disabled={loading || googleLoading}
+                    className="h-11 rounded-xl"
+                  />
+
+                  <FieldDescription className="text-xs">
+                    Minimum 6 characters with uppercase and lowercase letters.
+                  </FieldDescription>
+                </Field>
+
+                {/* Submit */}
                 <Button
                   type="submit"
-                  disabled={loading}
-                  className="w-full"
+                  disabled={loading || googleLoading}
+                  className="mt-2 h-11 w-full rounded-xl bg-blue-600 font-semibold hover:bg-blue-700"
                 >
-                  {loading ? "Creating Account..." : "Create Account"}
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                      Creating Account...
+                    </>
+                  ) : (
+                    "Create Account"
+                  )}
                 </Button>
+              </FieldGroup>
+            </form>
 
-                <FieldDescription className="text-center">
-                  Already have an account?{" "}
-                  <Link
-                    href="/sign-in"
-                    className="text-primary font-medium hover:underline"
-                  >
-                    Sign In
-                  </Link>
-                </FieldDescription>
-              </Field>
-            </FieldGroup>
-          </form>
-        </CardContent>
-      </Card>
+            {/* Login Link */}
+            <p className="text-center text-sm text-slate-500">
+              Already have an account?{" "}
+              <Link
+                href="/sign-in"
+                className="font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+              >
+                Sign In
+              </Link>
+            </p>
+          </CardContent>
+        </Card>
 
-      <FieldDescription className="px-6 text-center">
-        By creating an account, you agree to our{" "}
-        <Link href="#" className="underline">
-          Terms of Service
-        </Link>{" "}
-        and{" "}
-        <Link href="#" className="underline">
-          Privacy Policy
-        </Link>.
-      </FieldDescription>
+        {/* Terms */}
+        <p className="px-4 text-center text-xs leading-6 text-slate-400">
+          By creating an account, you agree to our{" "}
+          <Link
+            href="#"
+            className="underline hover:text-slate-600"
+          >
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="#"
+            className="underline hover:text-slate-600"
+          >
+            Privacy Policy
+          </Link>.
+        </p>
+
+      </div>
     </div>
   );
 }

@@ -1,9 +1,11 @@
 
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 import MyBorrowCard from "@/components/book/MyBorrowCard";
 import type { IBorrow } from "@/lib/types/borrow";
+import { getTokenFromServer } from "@/lib/getTokenFromServer";
 
 const MyBorrowsPage = async () => {
   const session = await auth.api.getSession({
@@ -13,17 +15,25 @@ const MyBorrowsPage = async () => {
   const user = session?.user;
 
   if (!user) {
-    return null;
+    redirect("/sign-in");
   }
+
+  const token = await getTokenFromServer();
 
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/borrows/${encodeURIComponent(user.email)}`,
     {
       cache: "no-store",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     }
   );
 
   if (!res.ok) {
+    const errorText = await res.text();
+    console.error("My Borrows API Error:", res.status, errorText);
+
     throw new Error("Failed to fetch borrowed books!");
   }
 
@@ -31,8 +41,6 @@ const MyBorrowsPage = async () => {
 
   return (
     <div className="container mx-auto max-w-5xl px-4 py-10 md:px-6">
-
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-normal tracking-tight">
           My Borrowed Books
@@ -43,7 +51,6 @@ const MyBorrowsPage = async () => {
         </p>
       </div>
 
-      {/* Borrowed Books List */}
       <div className="flex flex-col gap-4">
         {borrows.length > 0 ? (
           borrows.map((borrow) => (

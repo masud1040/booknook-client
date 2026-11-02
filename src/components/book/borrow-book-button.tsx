@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BookCheck, CalendarDays, Loader2 } from "lucide-react";
 import { toast } from "react-toastify";
+import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +21,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-import Image from "next/image";
+import { getTokenFromClient } from "@/lib/getTokenFromClient";
 
 interface BorrowBookButtonProps {
   bookId: string;
@@ -77,12 +78,15 @@ export function BorrowBookButton({
     try {
       setLoading(true);
 
+      const token = await getTokenFromClient();
+
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/borrows`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(borrowData),
         }

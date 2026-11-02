@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { RotateCcw, Loader2 } from "lucide-react";
 import { toast } from "react-toastify";
 
+import { getTokenFromClient } from "@/lib/getTokenFromClient";
+
 import { Button } from "@/components/ui/button";
 
 interface ReturnBookButtonProps {
@@ -22,14 +24,20 @@ export function ReturnBookButton({
     try {
       setLoading(true);
 
+      const token = await getTokenFromClient();
+
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/borrows/${borrowId}`,
         {
           method: "DELETE",
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
         }
       );
 
       const result = await res.json();
+      console.log(result);
 
       if (!res.ok) {
         toast.error(result.message || "Failed to return book!");
@@ -40,7 +48,12 @@ export function ReturnBookButton({
       router.refresh();
     } catch (error) {
       console.error("Return book error:", error);
-      toast.error("Something went wrong!");
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong!"
+      );
     } finally {
       setLoading(false);
     }
@@ -58,6 +71,7 @@ export function ReturnBookButton({
       ) : (
         <RotateCcw className="mr-2 size-4" />
       )}
+
       {loading ? "Returning..." : "Return Book"}
     </Button>
   );

@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
 
+import { getTokenFromClient } from "@/lib/getTokenFromClient";
+
 import { Button } from "@/components/ui/button";
 
 import {
@@ -38,14 +40,20 @@ export function DeleteBookDialog({
     try {
       setLoading(true);
 
+      const token = await getTokenFromClient();
+
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/books/${bookId}`,
         {
           method: "DELETE",
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
         }
       );
 
       const result = await res.json();
+      console.log(result);
 
       if (!res.ok) {
         toast.error(result.message || "Failed to delete book!");
@@ -57,7 +65,12 @@ export function DeleteBookDialog({
       router.refresh();
     } catch (error) {
       console.error("Delete book error:", error);
-      toast.error("Something went wrong!");
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong!"
+      );
     } finally {
       setLoading(false);
     }
@@ -65,16 +78,18 @@ export function DeleteBookDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger >
-        <Button
-          variant="outline"
-          size="icon"
-          title="Delete Book"
-          className="size-10 rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700"
-        >
-          <Trash2 className="size-4" />
-        </Button>
-      </AlertDialogTrigger>
+      <AlertDialogTrigger
+        render={
+          <Button
+            variant="outline"
+            size="icon"
+            title="Delete Book"
+            className="size-10 rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700"
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        }
+      />
 
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -104,7 +119,7 @@ export function DeleteBookDialog({
             }}
             className="bg-red-600 hover:bg-red-700"
           >
-            {loading ? "Deleting...": "Yes, Delete"}
+            {loading ? "Deleting..." : "Yes, Delete"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
