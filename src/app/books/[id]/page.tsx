@@ -27,7 +27,7 @@ const BookDetailsPage = async ({
 }) => {
   const { id } = await params;
 
-  // Check User Session
+
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -36,14 +36,14 @@ const BookDetailsPage = async ({
     redirect("/sign-in");
   }
 
-  // Get JWT Token
+
   const token = await getTokenFromServer();
 
   if (!token) {
     redirect("/sign-in");
   }
 
-  // Fetch Book Details
+
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/books/${id}`,
     {
@@ -133,7 +133,7 @@ const BookDetailsPage = async ({
                 </span>
               </p>
 
-              {/* Availability Information */}
+       
               <div className="mt-7 grid grid-cols-2 gap-4">
 
                 <div className="rounded-xl border border-slate-200 p-4">
