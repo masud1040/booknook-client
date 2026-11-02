@@ -184,9 +184,13 @@ export function EditBookDialog({ book }: EditBookDialogProps) {
             <Label>Category</Label>
 
             <Select
-              value={form.category}
-              onValueChange={(value) => update("category", value)}
-            >
+  value={form.category}
+  onValueChange={(value) => {
+    if (value !== null) {
+      update("category", value);
+    }
+  }}
+>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>

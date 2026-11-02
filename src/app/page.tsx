@@ -6,6 +6,8 @@ import RecentBooks from "@/components/book/recent-books";
 import { BooksSkeleton } from "@/components/book/books-skeleton";
 import Testimonials from "@/components/home/Testimonials";
 import FAQ from "@/components/home/FAQ";
+import LibraryCTA from "@/components/home/LibraryCTA";
+
 
 export default function HomePage() {
   return (
@@ -17,7 +19,9 @@ export default function HomePage() {
       </Suspense>
 
       <Testimonials />
+      <LibraryCTA />
       <FAQ />
+
     </main>
   );
 }

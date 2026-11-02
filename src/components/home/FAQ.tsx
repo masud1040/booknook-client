@@ -13,6 +13,7 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const faqData = [
   {
@@ -98,7 +99,7 @@ export default function FAQ() {
 
         {/* FAQ Accordion */}
         <Accordion
-          type="multiple"
+      
           value={openItems}
           onValueChange={setOpenItems}
           className="space-y-3"
@@ -134,12 +135,12 @@ export default function FAQ() {
         <div className="mt-7 border-t border-slate-100 pt-5 text-center">
           <p className="text-sm text-slate-500">
             Still have questions? Explore our{" "}
-            <a
+            <Link
               href="/books"
               className="font-semibold text-blue-600 hover:text-blue-700"
             >
               book collection
-            </a>
+            </Link>
             .
           </p>
         </div>
